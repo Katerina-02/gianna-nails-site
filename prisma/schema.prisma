@@ -3,10 +3,7 @@ generator client {
 }
 
 datasource db {
-  // Τοπικά τρέχει με SQLite (μηδενικό setup). Για production (Vercel + Neon)
-  // άλλαξε provider σε "postgresql" και το DATABASE_URL στο .env, μετά
-  // ξανατρέξε `npx prisma migrate deploy`.
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Τοπικά τρέχει με SQLite (μηδενικό setup). Για production (Vercel + Neon)
+  // άλλαξε provider σε "postgresql" και το DATABASE_URL στο .env, μετά
+  // ξανατρέξε `npx prisma migrate deploy`.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Service {
+  id              String             @id @default(cuid())
+  name            String
+  description     String
+  price           Float
+  durationMinutes Int
+  active          Boolean            @default(true)
+  order           Int                @default(0)
+  // Έξτρα υπηρεσία (προστίθεται πάνω σε άλλη) αντί για κύρια επιλογή.
+  isExtra         Boolean            @default(false)
+  // Μόνο για έξτρα: μπορεί να κλειστεί και μόνη της σαν ραντεβού.
+  standalone      Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  appointments    Appointment[]
+  extraOn         AppointmentExtra[]
+}
+
+model Appointment {
+  id                 String             @id @default(cuid())
+  date               String // "YYYY-MM-DD"
+  startTime          String // "HH:mm"
+  endTime            String // "HH:mm"
+  serviceId          String
+  service            Service            @relation(fields: [serviceId], references: [id])
+  extras             AppointmentExtra[]
+  clientName         String
+  clientPhone        String
+  clientEmail        String?
+  facebookUsername   String?
+  instagramUsername  String?
+  comments           String?
+  reminderSent       Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+
+  @@index([date])
+  @@index([clientPhone])
+}
+
+model AppointmentExtra {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  serviceId     String
+  service       Service     @relation(fields: [serviceId], references: [id])
+}
+
+// Χειροκίνητα κλειστές μέρες (π.χ. διακοπές). startDate/endDate είναι
+// συμπεριλαμβανόμενες ("YYYY-MM-DD").
+model ClosedPeriod {
+  id        String   @id @default(cuid())
+  startDate String
+  endDate   String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model Article {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  imageUrl  String? // data: URL (base64) της εικόνας του άρθρου
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Φωτογραφίες δουλειάς για τη δημόσια σελίδα Άλμπουμ.
+model Photo {
+  id        String   @id @default(cuid())
+  imageUrl  String // data: URL (base64)
+  caption   String?
+  createdAt DateTime @default(now())
+}
